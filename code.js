@@ -7,38 +7,62 @@ const colorSet={
     rotatingBlock:['grey']
 }
 
+const playerWidth=200
+
 
 function drawPlayer(phase){
+    ctx.save()
+    ctx.translate(canvas.width/2,canvas.height/2)
+    ctx.rotate(phase*Math.PI/180)
+
     ctx.fillStyle='grey'
-    ctx.fillRect(canvas.width/2-100,canvas.height/2-100,200,200)
+    ctx.fillRect(-playerWidth/2,-playerWidth/2,playerWidth,playerWidth)
+
+    ctx.restore()
 }
 
-function drawBlock(phase,x,y,width,height,color){
+
+function drawBlock(phase,posx,posy,width,height,color,x=0,y=0){
+    ctx.save()
+    ctx.translate(posx,posy)
+    ctx.rotate(phase*Math.PI/180)
+
+    dheight=height/2
+    width=y*2
+    y=y+dheight
+    
     dwidth=width/2
-    bWidth=y+10
-    tWidth=y-10
     ctx.beginPath()
-    ctx.moveTo(x-(dwidth+height), y+(height/2))
-    ctx.lineTo(x+dwidth+height, y+(height/2))
-    ctx.lineTo(x+dwidth, y-height)
-    ctx.lineTo(x-dwidth, y-height)
+    ctx.moveTo(x-(dwidth+height), y+(dheight))
+    ctx.lineTo(x+dwidth+height, y+(dheight))
+    ctx.lineTo(x+dwidth, y-dheight)
+    ctx.lineTo(x-dwidth, y-dheight)
     ctx.closePath()
     ctx.fillStyle=color
     ctx.fill()
+    ctx.fillStyle='white'
+    ctx.fillRect(-1,-1,2,2)
+
+    ctx.restore()
 }
 
 
 
-rotation = 90
+rotation = 0
+distance = 0
 
 function update(delta){
-    //rotation+=delta*1
+    rotation+=delta*40
+    distance+=delta*10
 }
 
 function render(){
     ctx.clearRect(0,0,canvas.width,canvas.height)
-    drawPlayer(canvas.width/2,canvas.height/2,200,rotation)
-    drawBlock(0,300,300,200,20,'red')
+    drawPlayer(rotation)
+    drawBlock(180+rotation,canvas.width/2,canvas.height/2,200,20,'blue',0,100+distance)
+    drawBlock(0+rotation,canvas.width/2,canvas.height/2,200,20,'rgb(255, 0, 0)',0,100+distance)
+    drawBlock(90+rotation,canvas.width/2,canvas.height/2,200,20,'rgb(30, 255, 0)',0,100+distance)
+    drawBlock(270+rotation,canvas.width/2,canvas.height/2,200,20,'rgb(255, 196, 0)',0,100+distance)
 }
 
 
