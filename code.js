@@ -7,7 +7,16 @@ const colorSet={
     rotatingBlock:['grey']
 }
 
-const playerWidth=200
+const allBlocks=[]
+
+const stackedBlocks={
+    top:[],
+    right:[],
+    left:[],
+    bottom:[]
+}
+
+const playerWidth=100
 const blockHeight=20
 let doubleTapSensor=0.3
 
@@ -46,8 +55,6 @@ function drawBlock(phase,posx,posy,width,height,color,x=0,y=0){
     ctx.closePath()
     ctx.fillStyle=color
     ctx.fill()
-    ctx.fillStyle='white'
-    ctx.fillRect(-1,-1,2,2)
 
     ctx.restore()
 }
@@ -63,53 +70,127 @@ function rotatePlayer(delta){
     }
     else{
         isPlayerRotating=false
-        currentPhase=(playerRotation/90)%4
+        currentPhase=Math.round(playerRotation/90)%4
     }
 }
 
-class Block{
-    constructor(color){
-        this.color=color
-        this.distance=300
-        this.phase=90
-        this.stationed=false
-        this.deg=0
-        this.stationedPhase=0
+function getRandomInteger(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+let generateBlockTimer=0
+function generateBlocks(delta){
+    if(generateBlockTimer<=0){
+        generateBlockTimer=getRandomInteger(1,3)
+        allBlocks.push(new Block(getRandomInteger(1,4)))
+    }
+    generateBlockTimer-=delta
+}
+
+
+function checkMatchingBlock(block){
+    const sides=['bottom','left','top','right']
+    const samsies=[]
+    const sidename = block.sideName
+    const stackindex=block.sideStackIndex
+    const color=block.color
+    const id=block.id
+    if(stackindex>0){
+        if(stackedBlocks[sidename][stackindex-1][0] == color){
+            samsies.push(stackedBlocks[sidename])
+            console.log(id)
+            allBlocks.splice(id,1)
+            stackedBlocks[sidename].splice(stackindex,1)
+        }
+    }
+}
+
+
+
+class Block {
+    constructor(colorCode) {
+        this.color = ''
+        switch (colorCode) {
+            case 1: this.color = 'rgba(255, 76, 76, 1)'; break
+            case 2: this.color = 'rgba(76, 255, 76, 1)'; break
+            case 3: this.color = 'rgba(76, 76, 255, 1)'; break
+            case 4: this.color = 'rgba(255, 229, 58, 1)'; break
+        }
+
+        this.distance = 300
+        this.phase = getRandomInteger(0, 3) * 90
+        this.stationed = false
+        this.deg = 0
+        this.stationedPhase = 0
+        this.sideName
+        this.sideStackIndex
+        this.id=allBlocks.length
     }
 
-    update(delta){
-        if(this.distance<=playerWidth/2 && !isPlayerRotating && !this.stationed){
-            this.stationed=true
-            distance=playerWidth/2
-            this.stationedPhase=currentPhase*90
+    update(delta) {
+        if (!this.stationed) {
+            let landingAngle = ((this.phase - playerRotation) % 360 + 360) % 360
+            landingAngle = Math.round(landingAngle)
+
+            let temporarySide = ''
+            switch (landingAngle) {
+                case 0:   temporarySide = 'bottom'; break
+                case 90:  temporarySide = 'left';   break
+                case 180: temporarySide = 'top';    break
+                case 270: temporarySide = 'right';  break
+            }
+
+            const currentStackCount = stackedBlocks[temporarySide] ? stackedBlocks[temporarySide].length : 0
+            const dynamicStopDistance = (playerWidth / 2) + (currentStackCount * blockHeight)
+
+            if (this.distance <= dynamicStopDistance && !isPlayerRotating) {
+                this.stationed = true
+                this.sideName = temporarySide
+                
+                this.distance = dynamicStopDistance
+                
+                this.stationedPhase = this.phase - playerRotation
+
+                stackedBlocks[this.sideName].push([this.color,this.id])
+                this.sideStackIndex=stackedBlocks[this.sideName].length-1
+                checkMatchingBlock(this)
+                console.log(this.id)
+            } else {
+                this.distance -= delta * 60
+            }
+
+
+            
         }
-        
-        if(this.stationed){
-            this.deg=playerRotation+this.stationedPhase
-        }
-        else{
-            this.distance-=delta*30
+
+        if (this.stationed) {
+            this.deg = playerRotation + this.stationedPhase - this.phase
         }
     }
 
-    draw(){
-        drawBlock(this.phase+this.deg,canvas.width/2,canvas.height/2,playerWidth,blockHeight,this.color,0,this.distance)
+    draw() {
+        drawBlock(this.phase + this.deg, canvas.width / 2, canvas.height / 2, playerWidth, blockHeight, this.color, 0, this.distance)
     }
 }
 
 let distance = 0
-let cat=new Block('rgba(203, 29, 29, 0.49)')
 
 function update(delta){
     rotatePlayer(delta)
     distance+=delta*10
-    cat.update(delta)
+    generateBlocks(delta)
+
+    for(let i=0;i<allBlocks.length;i++){
+        allBlocks[i].update(delta)
+    }
 }
 
 function render(){
     ctx.clearRect(0,0,canvas.width,canvas.height)
     drawPlayer(playerRotation)
-    cat.draw()
+    for(let i=0;i<allBlocks.length;i++){
+        allBlocks[i].draw()
+    }
 }
 
 let lastTime = 0
@@ -135,7 +216,6 @@ function gameLoop(ctime){
     requestAnimationFrame(gameLoop)
 }
 
-// Initial kickoff
 requestAnimationFrame((time) => {
     lastTime = time
     requestAnimationFrame(gameLoop)
