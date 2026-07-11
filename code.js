@@ -92,6 +92,8 @@ function pauseGame(){
     })
 }
 
+
+
 function restartGame(){
     globalScore=0
     globalBlocksToDelete.length=0
