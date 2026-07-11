@@ -74,6 +74,30 @@ function getRandomInteger(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
+let gameRunning=false
+function playGame(){
+    gameRunning=!gameRunning
+    requestAnimationFrame((time) => {
+    lastTime=time
+    requestAnimationFrame(gameLoop)
+    document.getElementById('intro').style.display='none'
+})
+}
+
+function pauseGame(){
+    gameRunning=!gameRunning
+    requestAnimationFrame((time) => {
+    lastTime=time
+    requestAnimationFrame(gameLoop)
+    })
+}
+
+function restartGame(){
+    globalScore=0
+    globalBlocksToDelete.length=0
+    allBlocks.length=0
+}
+
 let generateBlockTimer=0
 function generateBlocks(delta){
     if(generateBlockTimer<=0){
@@ -274,7 +298,7 @@ class Block {
 let distance=0
 
 function update(delta){
-    rotatePlayer(delta)
+    {rotatePlayer(delta)
     distance+=delta*10
     generateBlocks(delta)
     deleteBlocks(delta)
@@ -282,6 +306,7 @@ function update(delta){
     for(let i=0;i<allBlocks.length;i++){
         allBlocks[i].update(delta)
     }
+}
 }
 
 function render(){
@@ -299,21 +324,23 @@ const FPS=60
 const timestep=1000 / FPS
 
 function gameLoop(ctime){
-    let deltaTime=ctime - lastTime
-    lastTime=ctime
+    if(gameRunning){
+        let deltaTime=ctime - lastTime
+        lastTime=ctime
 
-    if (deltaTime > 250) deltaTime=250
+        if (deltaTime > 250) deltaTime=250
 
-    accumulator += deltaTime
+        accumulator += deltaTime
 
-    while (accumulator >= timestep) {
-        update(timestep / 1000)
-        accumulator -= timestep
+        while (accumulator >= timestep) {
+            update(timestep / 1000)
+            accumulator -= timestep
+        }
+
+        render()
+
+        requestAnimationFrame(gameLoop)
     }
-
-    render()
-
-    requestAnimationFrame(gameLoop)
 }
 
 requestAnimationFrame((time) => {
