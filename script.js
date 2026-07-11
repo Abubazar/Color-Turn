@@ -356,7 +356,7 @@ window.addEventListener("keydown", (e) => {
     }
 })
 
-window.addEventListener("touchstart", (e) => {
+canvas.addEventListener("touchstart", (e) => {
     e.preventDefault()
     if(!isPlayerRotating){targetRotation+=90}
 }, { passive: false })
